@@ -29,26 +29,13 @@ loom {
 	}
 }
 
-configurations {
-	fabricApiPack {
-		transitive = false
-	}
-}
-
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
-	fabricApiPack "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 }
 
 def modVersion = project.version
-def gameVersion = project.minecraft_version
-def loaderVersion = project.loader_version
-def apiFileName = "fabric-api-${project.fabric_api_version}.jar"
-def apiDownloadUrl = project.fabric_api_download_url
-def apiPackArtifact = configurations.fabricApiPack.elements.map { it.first().asFile }
-def mrpackIndex = layout.buildDirectory.file("generated/modrinth/modrinth.index.json")
 
 tasks.withType(ProcessResources).configureEach {
 	inputs.property "version", modVersion
@@ -73,53 +60,4 @@ jar {
 		rename { "${it}_${licenseName}" }
 	}
 	archiveFileName = "TrapClient-26.1.2.jar"
-}
-
-tasks.register("generateMrpackIndex") {
-	inputs.file(apiPackArtifact)
-	outputs.file(mrpackIndex)
-
-	doLast {
-		File apiJar = apiPackArtifact.get()
-		def sha1 = java.security.MessageDigest.getInstance("SHA-1").digest(apiJar.bytes).encodeHex().toString()
-		def sha512 = java.security.MessageDigest.getInstance("SHA-512").digest(apiJar.bytes).encodeHex().toString()
-		def index = [
-				formatVersion: 1,
-				game         : "minecraft",
-				versionId    : modVersion.toString(),
-				name         : "TRAP CLIENT",
-				summary      : "TRAP CLIENT for Minecraft ${gameVersion} on Fabric.",
-				files        : [[
-						path     : "mods/${apiFileName}",
-						hashes   : [sha1: sha1, sha512: sha512],
-						env      : [client: "required", server: "unsupported"],
-						downloads: [apiDownloadUrl],
-						fileSize : apiJar.length()
-				]],
-				dependencies : [
-						minecraft      : gameVersion,
-						"fabric-loader": loaderVersion
-				]
-		]
-
-		File output = mrpackIndex.get().asFile
-		output.parentFile.mkdirs()
-		output.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(index)) + "\n"
-	}
-}
-
-tasks.register("clientPack", Zip) {
-	dependsOn tasks.named("jar"), tasks.named("generateMrpackIndex")
-	archiveFileName = "TrapClient-${gameVersion}.mrpack"
-	destinationDirectory = layout.buildDirectory.dir("distributions")
-	from(mrpackIndex) {
-		rename { "modrinth.index.json" }
-	}
-	from(tasks.named("jar").flatMap { it.archiveFile }) {
-		into("overrides/mods")
-	}
-}
-
-tasks.named("assemble") {
-	dependsOn tasks.named("clientPack")
 }
