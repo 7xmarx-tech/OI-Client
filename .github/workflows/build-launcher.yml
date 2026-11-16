@@ -1,0 +1,64 @@
+name: Build Windows launcher
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "launcher-v*"
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - uses: gradle/actions/setup-gradle@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Build Fabric client and launcher resources
+        run: .\gradlew.bat build --no-daemon
+
+      - name: Publish self-contained launcher
+        run: >-
+          dotnet publish launcher/TrapClient.Launcher/TrapClient.Launcher.csproj
+          --configuration Release
+          --runtime win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+
+      - name: Install Inno Setup
+        run: choco install innosetup --yes --no-progress
+
+      - name: Build installer
+        run: iscc launcher/TrapClient.iss
+
+      - name: Upload launcher files
+        uses: actions/upload-artifact@v4
+        with:
+          name: TrapClient-Windows
+          path: |
+            launcher/TrapClient.Launcher/bin/Release/net10.0-windows/win-x64/publish/TrapClientLauncher.exe
+            build/distributions/TrapClient-Setup-26.1.2.exe
+          if-no-files-found: error
+
+      - name: Publish GitHub release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create "${{ github.ref_name }}"
+          "build/distributions/TrapClient-Setup-26.1.2.exe"
+          "launcher/TrapClient.Launcher/bin/Release/net10.0-windows/win-x64/publish/TrapClientLauncher.exe"
+          --title "TRAP CLIENT ${{ github.ref_name }}"
+          --generate-notes

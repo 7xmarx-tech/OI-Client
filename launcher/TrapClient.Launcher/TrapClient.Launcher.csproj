@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net10.0-windows</TargetFramework>
+		<Nullable>enable</Nullable>
+		<UseWindowsForms>true</UseWindowsForms>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<EnableWindowsTargeting>true</EnableWindowsTargeting>
+		<AssemblyName>TrapClientLauncher</AssemblyName>
+		<Product>TRAP CLIENT</Product>
+		<Company>TRAP CLIENT</Company>
+		<Version>1.0.0</Version>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="CmlLib.Core" Version="4.1.0" />
+		<PackageReference Include="CmlLib.Core.Auth.Microsoft" Version="3.4.0" />
+		<PackageReference Include="XboxAuthNet.Game.Msal" Version="0.2.0" />
+		<EmbeddedResource Include="../../build/libs/TrapClient-26.1.2.jar"
+		                  LogicalName="TrapClient.Launcher.TrapClient-26.1.2.jar" />
+	</ItemGroup>
+</Project>

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "trapclient",
+  "version": "${version}",
+  "name": "TRAP CLIENT",
+  "description": "A polished, client-side quality-of-life mod with a customizable HUD and click GUI.",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "dev.trapclient.TrapClient"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.20.1",
+    "minecraft": "~26.1.2",
+    "java": ">=25",
+    "fabric-api": ">=0.155.3"
+  }
+}
